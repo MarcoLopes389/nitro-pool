@@ -1,0 +1,1 @@
+export type TaskFunction<T, Y> = (context: Y) => T
