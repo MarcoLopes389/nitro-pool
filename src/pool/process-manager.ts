@@ -12,10 +12,12 @@ type PendingRequest = {
 export class ProcessManager {
     private child: ChildProcess
     private pending = new Map<string, PendingRequest>()
+    private options: PoolConfig
     private readyPromise: Promise<void>
 
     constructor(scriptPath: string, config: PoolConfig) {
-        this.child = fork(scriptPath)
+        this.options = config
+        this.child = this.spawn(scriptPath)
 
         this.child.send({
             type: ProcessEventType.REGISTER,
@@ -36,6 +38,14 @@ export class ProcessManager {
 
         this.child.on('exit', () => {
             this.rejectAll(new Error('Child process exited'))
+        })
+    }
+
+    private spawn(scriptPath: string) {
+        return fork(scriptPath, [], {
+          execArgv: [
+            `--max-old-space-size=${this.options.poolMaxMemory}`
+          ]
         })
     }
 

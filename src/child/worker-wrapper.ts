@@ -1,7 +1,7 @@
 import { Worker } from 'node:worker_threads'
 import { WorkerState } from '../types/worker-state.enum'
 import { WorkerEventType } from '../protocol/worker-event-type.enum'
-import { WorkerMessage, WorkerMessage2 } from '../protocol/worker-message.type'
+import { WorkerMessage } from '../protocol/worker-message.type'
 
 export class WorkerWrapper {
     public readonly instance: Worker
@@ -27,7 +27,7 @@ export class WorkerWrapper {
         this.state = WorkerState.BUSY
     }
 
-    execute(task: WorkerMessage2) {
+    execute(task: WorkerMessage) {
         if (!this.isReady()) {
             throw new Error('Worker is not ready')
         }
@@ -36,8 +36,8 @@ export class WorkerWrapper {
         this.instance.postMessage(task)
     }
 
-    onMessage(handler: (message: WorkerMessage2, worker: WorkerWrapper) => void) {
-        this.instance.on('message', (message: WorkerMessage2) => {
+    onMessage(handler: (message: WorkerMessage, worker: WorkerWrapper) => void) {
+        this.instance.on('message', (message: WorkerMessage) => {
             if (message.type === WorkerEventType.RESULT) {
                 this.markReady()
             }

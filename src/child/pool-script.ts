@@ -41,7 +41,7 @@ process.on('message', (message: ProcessMessage) => {
             workerPool.execute({
                 content,
                 id,
-                type: WorkerEventType.EXECUTE
+                type: WorkerEventType.EXECUTE,
             })
 
             break;

@@ -1,8 +1,10 @@
+import { ModulesMap } from "../types/task-run-options.type"
 import { ProcessEventType } from "./process-event-type.enum"
 
 export type ProcessMessageExecute = {
     func: string
     context: unknown
+    modules?: ModulesMap
 }
 
 interface ProcessMessageMap {

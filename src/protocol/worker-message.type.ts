@@ -1,23 +1,25 @@
+import { ModulesMap } from "../types/task-run-options.type"
 import { WorkerEventType } from "./worker-event-type.enum"
-import { WorkerExecutionMessage } from "./worker-execution-message.type"
 
-interface ProcessMessageMap {
+export type WorkerExecutionMessage = {
+    context: unknown
+    func: string
+    modules?: ModulesMap
+}
+
+interface WorkerMessageContentMap {
     [WorkerEventType.EXECUTE]: WorkerExecutionMessage
     [WorkerEventType.READY]: {
         ok: boolean
     }
     [WorkerEventType.RESULT]: unknown
+    [WorkerEventType.ERROR]: unknown
 }
 
-export type WorkerMessage2 = {
+export type WorkerMessage = {
   [K in WorkerEventType]: {
     id: string
     type: K
-    content: ProcessMessageMap[K]
+    content: WorkerMessageContentMap[K]
   }
 }[WorkerEventType]
-
-export type WorkerMessage = {
-    type: WorkerEventType
-    content: unknown
-}

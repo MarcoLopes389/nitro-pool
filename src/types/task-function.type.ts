@@ -1,1 +1,1 @@
-export type TaskFunction<T, Y> = (context: Y) => T
+export type TaskFunction<T, Y> = (context: Y, modules: Record<string, any>) => T

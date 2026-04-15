@@ -1,17 +1,17 @@
 import { Worker } from 'node:worker_threads'
 import { WorkerWrapper } from './worker-wrapper'
 import { WorkerEventType } from '../protocol/worker-event-type.enum'
-import { WorkerMessage, WorkerMessage2 } from '../protocol/worker-message.type'
+import { WorkerMessage } from '../protocol/worker-message.type'
 
 type Callbacks = {
     onReady: () => void
-    onResult: (message: WorkerMessage2) => void
-    onError: (message: WorkerMessage2) => void
+    onResult: (message: WorkerMessage) => void
+    onError: (message: WorkerMessage) => void
 }
 
 export class WorkerPool {
     private workers: WorkerWrapper[] = []
-    private queue: WorkerMessage2[] = []
+    private queue: WorkerMessage[] = []
 
     constructor(private threads: number) {}
 
@@ -36,7 +36,7 @@ export class WorkerPool {
         }
     }
 
-    execute(task: WorkerMessage2) {
+    execute(task: WorkerMessage) {
         const worker = this.getAvailableWorker()
 
         if (worker) {
@@ -48,7 +48,7 @@ export class WorkerPool {
     }
 
     private handleWorkerMessage(
-        message: WorkerMessage2, 
+        message: WorkerMessage, 
         worker: WorkerWrapper, 
         callbacks: Callbacks
     ) {
