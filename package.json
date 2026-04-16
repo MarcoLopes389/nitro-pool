@@ -1,5 +1,5 @@
 {
-  "name": "bullet-train",
+  "name": "nitro-pool",
   "version": "1.0.0",
   "description": "",
   "main": "lib/index.js",
@@ -10,12 +10,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/MarcoLopes389/bullet-train.git"
+    "url": "https://github.com/MarcoLopes389/nitro-pool.git"
   },
   "bugs": {
-    "url": "https://github.com/MarcoLopes389/bullet-train/issues"
+    "url": "https://github.com/MarcoLopes389/nitro-pool/issues"
   },
-  "homepage": "https://github.com/MarcoLopes389/bullet-train",
+  "homepage": "https://github.com/MarcoLopes389/nitro-pool",
   "keywords": [
     "threads",
     "pool",

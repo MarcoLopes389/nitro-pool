@@ -1,4 +1,4 @@
-import type { BulletTrainConfig } from '../types/bullet-train-config.type.js';
+import type { NitroConfig } from '../types/nitro-config.type.js';
 import { Pool } from '../pool/pool.js';
 import { Randomizer } from '../utils/randomizer.js';
 import { TaskFunction } from '../types/task-function.type.js';
@@ -8,14 +8,14 @@ import {
   ModulesMap,
 } from '../types/module.type.js';
 
-export class BulletTrain {
+export class Nitro {
   private pools: Pool[] = [];
 
-  constructor(config: BulletTrainConfig) {
+  constructor(config: NitroConfig) {
     this.initialize(config);
   }
 
-  private initialize(config: BulletTrainConfig) {
+  private initialize(config: NitroConfig) {
     const { pools, threads, poolMaxMemoryMb, maxAttempts, retry } = config;
 
     for (let i = 0; i < pools; i++) {

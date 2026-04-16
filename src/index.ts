@@ -1,3 +1,3 @@
-export * from './core/bullet-train';
+export * from './core/nitro';
 export * from './utils/module';
-export * from './types/bullet-train-config.type'
+export * from './types/nitro-config.type'

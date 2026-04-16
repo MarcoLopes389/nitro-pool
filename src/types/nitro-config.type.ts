@@ -1,4 +1,4 @@
-export type BulletTrainConfig = {
+export type NitroConfig = {
   threads: number;
   pools: number;
   poolMaxMemoryMb: number;

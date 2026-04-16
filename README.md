@@ -1,4 +1,4 @@
-# Bullet Train
+# Nitro
 
 - [Installation](#installation)
 - [Goal](#goal)
@@ -16,7 +16,7 @@
 ## Installation
 
 ```bash
-npm install bullet-train
+npm install nitro-pool
 ```
 
 ## Goal
@@ -25,7 +25,7 @@ Node.js does not provide a simple way to execute dynamic tasks in isolated threa
 
 When working with `child_process` or `worker_threads`, developers are usually required to create separate `.js` files and manually manage their execution. This adds friction, reduces developer experience, and often leads teams to avoid proper parallelism — even for CPU-bound or blocking tasks.
 
-Bullet Train was created to solve this problem.
+Nitro was created to solve this problem.
 
 It provides a simple and powerful abstraction over both `child_process` and `worker_threads`, allowing you to:
 
@@ -37,7 +37,7 @@ It provides a simple and powerful abstraction over both `child_process` and `wor
 Instead of dealing with low-level APIs, you can just write:
 
 ```js
-await bullet.run(
+await nitro.run(
   async (context, modules) => {
     const content = await modules.fs.readFile('file.txt', 'utf-8')
     return content.toUpperCase()
@@ -51,11 +51,11 @@ await bullet.run(
 )
 ```
 
-Bullet Train handles the rest — process isolation, worker management, and execution.
+Nitro handles the rest — process isolation, worker management, and execution.
 
 ## Basic Usage
 
-The Bullet Train class uses an internal Promise-based system that waits for task execution across threads and resolves or rejects based on the final result of your code.
+The Nitro class uses an internal Promise-based system that waits for task execution across threads and resolves or rejects based on the final result of your code.
 
 An important detail about the function you provide to the `run` method is that, due to JavaScript limitations, it is completely isolated from the outer scope. This means you must explicitly inject any variables (via `context`) and modules you want to use inside the function.
 
@@ -64,7 +64,7 @@ Additionally, it is not possible to use externally declared functions — everyt
 Below is a basic usage example:
 
 ```javascript
-const bullet = new BulletTrain({
+const nitro = new Nitro({
   poolMaxMemoryMb: 128, // memory limit per pool
   maxAttempts: 1, // not implemented yet
   retry: true, // not implemented yet
@@ -72,7 +72,7 @@ const bullet = new BulletTrain({
   threads: 2, // threads per pool (total: 20)
 })
 
-await bullet.run(
+await nitro.run(
   async (context, modules) => {
     const content = await modules.fs.readFile(context.path)
     return content
@@ -95,7 +95,7 @@ All parameters passed through context and modules are fully typed, making develo
 If you try to execute more tasks than available threads, the library will automatically queue the extra tasks. Each thread processes one task at a time and continuously pulls new tasks from the queue.
 
 ```javascript
-const bullet = new BulletTrain({
+const nitro = new Nitro({
   poolMaxMemoryMb: 128,
   maxAttempts: 1,
   retry: true,
@@ -105,7 +105,7 @@ const bullet = new BulletTrain({
 
 // Since there are only 2 threads available, one of these tasks will be queued
 await Promise.all([
-  bullet.run(
+  nitro.run(
     async (context, modules) => {
       const content = await modules.fs.readFile(context.path)
       return content
@@ -119,7 +119,7 @@ await Promise.all([
       ]
     }
   ),
-  bullet.run(
+  nitro.run(
     async (context, modules) => {
       const content = await modules.fs.readFile(context.path)
       return content
@@ -133,7 +133,7 @@ await Promise.all([
       ]
     }
   ),
-  bullet.run(
+  nitro.run(
     async (context, modules) => {
       const content = await modules.fs.readFile(context.path)
       return content
@@ -152,7 +152,7 @@ await Promise.all([
 
 ## How it works
 
-Bullet Train uses a combination of `child_process` and `worker_threads` to execute tasks in parallel.
+Nitro uses a combination of `child_process` and `worker_threads` to execute tasks in parallel.
 
 - Each pool is a separate process
 - Each process manages multiple worker threads
@@ -163,7 +163,7 @@ This design provides both isolation (process-level) and performance (thread-leve
 
 ## When to use
 
-Bullet Train is designed for:
+Nitro is designed for:
 
 - CPU-intensive tasks
 - Blocking operations
@@ -231,7 +231,7 @@ Explicit module injection ensures:
 
 ## Limitations
 
-Due to the execution model used by Bullet Train, there are some important limitations:
+Due to the execution model used by Nitro, there are some important limitations:
 
 - Functions passed to `run` are fully isolated from the outer scope
 - Functions are serialized using `toString()`
