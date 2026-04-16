@@ -20,12 +20,23 @@ parentPort?.on('message', async (message: WorkerMessage) => {
       taskExecutor.loadModules(modules);
     }
 
-    const result = await taskExecutor.execute(func, context);
+    try {
+      const result = await taskExecutor.execute(func, context);
 
-    parentPort?.postMessage({
-      id,
-      type: WorkerEventType.RESULT,
-      content: result,
-    });
+      parentPort?.postMessage({
+        id,
+        type: WorkerEventType.RESULT,
+        content: result,
+      });
+    } catch (error) {
+      parentPort?.postMessage({
+        id,
+        type: WorkerEventType.ERROR,
+        content: {
+          message: (error as Error).message,
+          stack: (error as Error).stack,
+        },
+      });
+    }
   }
 });

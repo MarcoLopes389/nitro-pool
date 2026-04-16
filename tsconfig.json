@@ -3,8 +3,6 @@
     "strictNullChecks": true,
     "declaration": true,
     "removeComments": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "noImplicitOverride": true,
     "allowJs": true,
@@ -12,11 +10,11 @@
     "module": "commonjs",
     "target": "es2017",
     "sourceMap": true,
-    "outDir": "./dist",
+    "rootDir": "./src",
+    "outDir": "./lib",
     "types": ["node"],
     "incremental": true,
     "skipLibCheck": true,
-    "lib": ["ES2019", "DOM"],
     "esModuleInterop": true
   }
 }

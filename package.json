@@ -2,18 +2,31 @@
   "name": "bullet-train",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "prepublish": "npm run build"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MarcoLopes389/bullet-train.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MarcoLopes389/bullet-train/issues"
+  },
+  "homepage": "https://github.com/MarcoLopes389/bullet-train",
   "keywords": [
     "threads",
     "pool",
     "child_process",
     "worker_threads"
   ],
+  "files": [
+    "lib/**/*"
+  ],
   "author": "Marco Lopes",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "^25.6.0",
     "prettier": "^3.8.3",

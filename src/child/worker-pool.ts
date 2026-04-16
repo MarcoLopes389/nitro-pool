@@ -71,11 +71,14 @@ export class WorkerPool {
 
         break;
 
-      // case WorkerEventType.ERROR:
-      //     worker.markReady()
+      case WorkerEventType.ERROR:
+        worker.markReady()
 
-      //     this.dispatchNext()
-      //     break
+        callbacks.onError(message)
+
+        this.dispatchNext()
+        
+        break
     }
   }
 

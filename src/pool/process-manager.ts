@@ -104,16 +104,19 @@ export class ProcessManager {
       return;
     }
 
-    // if (type === ProcessEventType.ERROR && id) {
-    //     const pending = this.pending.get(id)
+    if (type === ProcessEventType.ERROR && id) {
+      const pending = this.pending.get(id)
 
-    //     if (pending) {
-    //         pending.reject(content)
-    //         this.pending.delete(id)
-    //     }
+      if (pending) {
+          const error = new Error(content.message)
+          error.stack = content.stack
 
-    //     return
-    // }
+          pending.reject(error)
+          this.pending.delete(id)
+      }
+
+      return
+    }
   }
 
   private rejectAll(error: Error) {

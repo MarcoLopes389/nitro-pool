@@ -33,7 +33,13 @@ process.on('message', (message: ProcessMessage) => {
               id: message.id,
             });
           },
-          onError: () => {},
+          onError: (message) => {
+            process.send?.({
+              type: ProcessEventType.ERROR,
+              content: message.content,
+              id: message.id,
+            });
+          },
         },
       );
       break;

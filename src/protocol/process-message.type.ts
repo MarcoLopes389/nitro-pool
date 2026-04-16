@@ -16,6 +16,10 @@ interface ProcessMessageMap {
     ok: boolean;
   };
   [ProcessEventType.RESULT]: unknown;
+  [ProcessEventType.ERROR]: {
+    message: string
+    stack: string
+  };
 }
 
 export type ProcessMessage = {
