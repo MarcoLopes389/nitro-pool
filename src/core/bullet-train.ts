@@ -1,51 +1,66 @@
-import type { BulletTrainConfig } from "../types/bullet-train-config.type.js";
-import { Pool } from "../pool/pool.js";
-import { Randomizer } from "../utils/randomizer.js";
-import { TaskFunction } from "../types/task-function.type.js";
-import { ModulesMap, TaskRunOptions } from "../types/task-run-options.type.js";
+import type { BulletTrainConfig } from '../types/bullet-train-config.type.js';
+import { Pool } from '../pool/pool.js';
+import { Randomizer } from '../utils/randomizer.js';
+import { TaskFunction } from '../types/task-function.type.js';
+import {
+  InferModules,
+  ModuleDefinition,
+  ModulesMap,
+} from '../types/module.type.js';
 
 export class BulletTrain {
-    private pools: Pool[] = []
+  private pools: Pool[] = [];
 
-    constructor(config: BulletTrainConfig) {
-        this.initialize(config)
+  constructor(config: BulletTrainConfig) {
+    this.initialize(config);
+  }
+
+  private initialize(config: BulletTrainConfig) {
+    const { pools, threads, poolMaxMemoryMb, maxAttempts, retry } = config;
+
+    for (let i = 0; i < pools; i++) {
+      const pool = new Pool({
+        threads,
+        poolMaxMemoryMb,
+        maxAttempts,
+        retry,
+      });
+
+      this.pools.push(pool);
+    }
+  }
+
+  private serializeModules(
+    modules: readonly ModuleDefinition<any>[],
+  ): ModulesMap {
+    const result: ModulesMap = {};
+
+    for (const mod of modules) {
+      result[mod.name] = mod.path;
     }
 
-    private initialize(config: BulletTrainConfig) {
-        const { 
-            pools,
-            threads,
-            poolMaxMemory,
-            maxAttempts,
-            retry
-        } = config
+    return result;
+  }
 
-        for (let i = 0; i < pools; i++) {
-            const pool = new Pool({
-                threads,
-                poolMaxMemory,
-                maxAttempts,
-                retry
-            })
+  async run<TReturn, TContext, TDefs extends readonly ModuleDefinition<any>[]>(
+    func: TaskFunction<TReturn, TContext, InferModules<TDefs>>,
+    context: TContext,
+    options: {
+      modules: TDefs;
+    },
+  ) {
+    const poolIndex = Randomizer.randomIndex(this.pools.length);
 
-            this.pools.push(pool)
-        }
-    }
+    const pool = this.pools[poolIndex];
 
-    async run<
-      TReturn,
-      TContext,
-    >(func: TaskFunction<TReturn, TContext>, context: TContext, options: TaskRunOptions) {
-        const poolIndex = Randomizer.randomIndex(this.pools.length)
+    return pool.run(func, context, {
+      modules: this.serializeModules(options.modules),
+    });
+  }
 
-        const pool = this.pools[poolIndex]
-
-        return pool.run(func, context, options)
-    }
-
-    finish() {
-        this.pools.forEach((pool) => {
-            pool.finish()
-        })
-    }
+  finish() {
+    this.pools.forEach((pool) => {
+      pool.finish();
+    });
+  }
 }

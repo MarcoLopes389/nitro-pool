@@ -16,10 +16,7 @@
     "types": ["node"],
     "incremental": true,
     "skipLibCheck": true,
-    "lib": [
-      "ES2019",
-      "DOM"
-    ],
-    "esModuleInterop": true,
+    "lib": ["ES2019", "DOM"],
+    "esModuleInterop": true
   }
 }

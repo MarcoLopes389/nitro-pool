@@ -1,1 +1,1 @@
-export * from './src/core/bullet-train'
+export * from './src/core/bullet-train';

@@ -1,31 +1,31 @@
-import { parentPort } from 'node:worker_threads'
-import { WorkerEventType } from '../protocol/worker-event-type.enum'
-import { TaskExecutor } from './task-executor'
-import { WorkerMessage } from '../protocol/worker-message.type'
+import { parentPort } from 'node:worker_threads';
+import { WorkerEventType } from '../protocol/worker-event-type.enum';
+import { TaskExecutor } from './task-executor';
+import { WorkerMessage } from '../protocol/worker-message.type';
 
-const taskExecutor = new TaskExecutor()
+const taskExecutor = new TaskExecutor();
 
 parentPort?.postMessage({
-    type: WorkerEventType.READY,
-    content: { ok: true }
-})
+  type: WorkerEventType.READY,
+  content: { ok: true },
+});
 
 parentPort?.on('message', async (message: WorkerMessage) => {
-    const { content, type, id } = message
+  const { content, type, id } = message;
 
-    if (type == WorkerEventType.EXECUTE) {
-        const { context, func, modules } = content
+  if (type == WorkerEventType.EXECUTE) {
+    const { context, func, modules } = content;
 
-        if (modules) {
-            taskExecutor.loadModules(modules)
-        }
-
-        const result = await taskExecutor.execute(func, context)
-
-        parentPort?.postMessage({
-            id,
-            type: WorkerEventType.RESULT,
-            content: result
-        })
+    if (modules) {
+      taskExecutor.loadModules(modules);
     }
-})
+
+    const result = await taskExecutor.execute(func, context);
+
+    parentPort?.postMessage({
+      id,
+      type: WorkerEventType.RESULT,
+      content: result,
+    });
+  }
+});

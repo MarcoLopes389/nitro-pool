@@ -1,9 +1,9 @@
 export class Randomizer {
-    static randomIndex(until: number) {
-        const random = Math.random()
+  static randomIndex(until: number) {
+    const random = Math.random();
 
-        const basedOnUntil = random * until
+    const basedOnUntil = random * until;
 
-        return Math.floor(basedOnUntil)
-    }
+    return Math.floor(basedOnUntil);
+  }
 }

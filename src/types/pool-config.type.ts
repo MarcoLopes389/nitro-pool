@@ -1,6 +1,6 @@
 export type PoolConfig = {
-    threads: number
-    poolMaxMemory: number
-    maxAttempts: number
-    retry: boolean
-}
+  threads: number;
+  poolMaxMemoryMb: number;
+  maxAttempts: number;
+  retry: boolean;
+};
