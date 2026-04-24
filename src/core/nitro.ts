@@ -24,6 +24,16 @@ export class Nitro {
       maxAttempts,
       retry,
       maxPoolQueueSize,
+      maxThreads,
+      autoscaling,
+      logging,
+      smartResourcesLimiter,
+      maxStep,
+      minThreads,
+      scaleDownQueueThreshold,
+      scaleUpQueueThreshold,
+      targetUtilization,
+      scalingInterval,
     } = config;
 
     for (let i = 0; i < pools; i++) {
@@ -33,6 +43,16 @@ export class Nitro {
         maxPoolQueueSize,
         maxAttempts,
         retry,
+        autoscaling,
+        maxThreads,
+        smartResourcesLimiter,
+        logging,
+        maxStep,
+        minThreads,
+        scaleDownQueueThreshold,
+        scaleUpQueueThreshold,
+        targetUtilization,
+        scalingInterval
       });
 
       this.pools.push(pool);
@@ -66,7 +86,7 @@ export class Nitro {
 
     return pool.run(func, context, {
       modules: this.serializeModules(options?.modules),
-      ...options
+      ...options,
     });
   }
 

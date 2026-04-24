@@ -1,11 +1,11 @@
 import { Worker } from 'node:worker_threads';
 import { WorkerState } from '../protocol/worker-state.enum';
-import { WorkerEventType } from '../protocol/worker-event-type.enum';
 import { WorkerMessage } from '../protocol/worker-message.type';
 
 export class WorkerWrapper {
   public readonly instance: Worker;
   private state: WorkerState = WorkerState.WAITING;
+  private startExecution: number = 0;
 
   constructor(worker: Worker) {
     this.instance = worker;
@@ -32,6 +32,7 @@ export class WorkerWrapper {
       throw new Error('Worker is not ready');
     }
 
+    this.startExecution = Date.now();
     this.markBusy();
     this.instance.postMessage(task);
   }
@@ -52,5 +53,9 @@ export class WorkerWrapper {
 
   async terminate() {
     await this.instance.terminate();
+  }
+
+  getStartExecution() {
+    return this.startExecution;
   }
 }

@@ -28,6 +28,14 @@ export class ProcessManager {
       content: {
         threads: config.threads,
         maxPoolQueueSize: config.maxPoolQueueSize,
+        maxThreads: config.maxThreads,
+        autoscaling: config.autoscaling,
+        minThreads: config.minThreads,
+        targetUtilization: config.targetUtilization,
+        scaleUpQueueThreshold: config.scaleUpQueueThreshold,
+        scaleDownQueueThreshold: config.scaleDownQueueThreshold,
+        maxStep: config.maxStep,
+        scalingInterval: config.scalingInterval
       },
     });
 

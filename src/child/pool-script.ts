@@ -11,11 +11,30 @@ process.on('message', (message: ProcessMessage) => {
 
   switch (type) {
     case ProcessEventType.REGISTER:
-      const { threads, maxPoolQueueSize } = content;
+      const {
+        threads,
+        maxPoolQueueSize,
+        maxThreads,
+        autoscaling,
+        maxStep,
+        minThreads,
+        scaleDownQueueThreshold,
+        scaleUpQueueThreshold,
+        targetUtilization,
+        scalingInterval
+      } = content;
 
       workerPool = new WorkerPool({
         threads,
         maxPoolQueueSize,
+        maxThreads,
+        autoscaling,
+        maxStep,
+        minThreads,
+        scaleDownQueueThreshold,
+        scaleUpQueueThreshold,
+        targetUtilization,
+        scalingInterval,
       });
 
       workerPool.initialize(

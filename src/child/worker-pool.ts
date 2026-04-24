@@ -4,6 +4,10 @@ import { WorkerEventType } from '../protocol/worker-event-type.enum';
 import { WorkerMessage } from '../protocol/worker-message.type';
 import { WorkerPoolConfig } from '../types/worker-pool-config.type';
 import { TaskPriority } from '../enums/task-priority.enum';
+import { Scheduler } from '../core/resources/scheduler';
+import { PoolMetrics } from '../types/pool-metrics.type';
+import { RuntimeMeter } from '../core/resources/runtime-meter';
+import { AutoScaler } from '../core/resources/autoscaler';
 
 type Callbacks = {
   onReady: () => void;
@@ -12,43 +16,116 @@ type Callbacks = {
 };
 
 export class WorkerPool {
+  private workerScriptPath: string = '';
   private workers: WorkerWrapper[] = [];
-  private queues: Record<TaskPriority, WorkerMessage[]> = {
-    [TaskPriority.HIGH]: [],
-    [TaskPriority.NORMAL]: [],
-    [TaskPriority.LOW]: [],
-  };
-  private queueSize = 0;
+  private scheduler: Scheduler;
+  private runtimeMeter: RuntimeMeter;
+  private autoscaler: AutoScaler;
+  private scaleInterval: NodeJS.Timeout | undefined;
 
-  constructor(private config: WorkerPoolConfig) {}
+  constructor(private config: WorkerPoolConfig) {
+    this.scheduler = new Scheduler();
+    this.autoscaler = new AutoScaler({
+      maxStep: config.maxStep,
+      maxThreads: config.maxThreads,
+      minThreads: config.minThreads,
+      scaleDownQueueThreshold: config.scaleDownQueueThreshold,
+      scaleUpQueueThreshold: config.scaleUpQueueThreshold,
+      targetUtilization: config.targetUtilization,
+    });
+    this.runtimeMeter = new RuntimeMeter();
+  }
 
   initialize(workerScriptPath: string, callbacks: Callbacks) {
+    this.workerScriptPath = workerScriptPath;
+
     for (let i = 0; i < this.config.threads; i++) {
-      const worker = new Worker(workerScriptPath);
-      const wrapper = new WorkerWrapper(worker);
+      this.addWorker(callbacks);
+    }
 
-      wrapper.onMessage((message, workerRef) => {
-        this.handleWorkerMessage(message, workerRef, callbacks);
-      });
-
-      wrapper.onError((err) => {
-        console.error('worker error:', err);
-      });
-
-      wrapper.onExit((code) => {
-        console.log('worker exit:', code);
-      });
-
-      this.workers.push(wrapper);
+    if (this.config.autoscaling) {
+      this.startAutoScaling(callbacks);
     }
   }
 
+  private removeWorker() {
+    const worker = this.workers.find((w) => w.isReady());
+
+    if (!worker) return;
+
+    worker.terminate();
+
+    this.workers = this.workers.filter((w) => w !== worker);
+  }
+
+  private addWorker(callbacks: Callbacks) {
+    const worker = new Worker(this.workerScriptPath);
+    const wrapper = new WorkerWrapper(worker);
+
+    wrapper.onMessage((message, workerRef) => {
+      if (message.type === WorkerEventType.RESULT) {
+        const duration = Date.now() - workerRef.getStartExecution();
+
+        this.runtimeMeter.recordExecution(duration);
+      }
+
+      this.handleWorkerMessage(message, workerRef, callbacks);
+    });
+
+    wrapper.onError((err) => {
+      console.error('worker error:', err);
+    });
+
+    wrapper.onExit((code) => {
+      console.log('worker exit:', code);
+    });
+
+    this.workers.push(wrapper);
+  }
+
+  private startAutoScaling(callbacks: Callbacks) {
+    this.scaleInterval = setInterval(() => {
+      const metrics = this.getMetrics();
+
+      const decision = this.autoscaler.evaluate(metrics);
+
+      if (decision > 0) {
+        for (let i = 0; i < decision; i++) {
+          console.log('adicionando worker')
+          this.addWorker(callbacks);
+        }
+      }
+
+      if (decision < 0) {
+        for (let i = 0; i < Math.abs(decision); i++) {
+          this.removeWorker();
+        }
+      }
+    }, this.config.scalingInterval ?? 1000);
+  }
+
+  private getMetrics(): PoolMetrics {
+    const idleWorkers = this.workers.filter((w) => w.isReady()).length;
+    const busyWorkers = this.workers.filter((w) => w.isBusy()).length;
+
+    return {
+      idleWorkers,
+      busyWorkers,
+      queueSize: this.scheduler.size(),
+      totalWorkers: this.workers.length,
+      avgNewTasksPerSecond: this.runtimeMeter.getArrivalRate(),
+      avgExecutionDurationInSeconds: this.runtimeMeter.getAvgExecutionTime(),
+    };
+  }
+
   execute(task: WorkerMessage) {
-    const { type, content } = task
+    const { type, content } = task;
 
     if (type != WorkerEventType.EXECUTE) {
-      throw new Error('Only execution is allowed from this side')
+      throw new Error('Only execution is allowed from this side');
     }
+
+    this.runtimeMeter.recordArrival();
 
     const worker = this.getAvailableWorker();
 
@@ -61,14 +138,12 @@ export class WorkerPool {
 
     if (
       this.config.maxPoolQueueSize &&
-      this.queueSize >= this.config.maxPoolQueueSize
+      this.scheduler.size() >= this.config.maxPoolQueueSize
     ) {
       throw new Error('Queue limit reached');
     }
 
-    this.queues[priority].push(task);
-
-    this.queueSize++;
+    this.scheduler.enqueue(task, priority);
   }
 
   private handleWorkerMessage(
@@ -106,32 +181,14 @@ export class WorkerPool {
     }
   }
 
-  private getNextTask(): WorkerMessage | null {
-    if (this.queues[TaskPriority.HIGH].length > 0) {
-      return this.queues[TaskPriority.HIGH].shift()!;
-    }
-
-    if (this.queues[TaskPriority.NORMAL].length > 0) {
-      return this.queues[TaskPriority.NORMAL].shift()!;
-    }
-
-    if (this.queues[TaskPriority.LOW].length > 0) {
-      return this.queues[TaskPriority.LOW].shift()!;
-    }
-
-    return null;
-  }
-
   private dispatchNext() {
     const worker = this.getAvailableWorker();
     if (!worker) return;
 
-    const nextTask = this.getNextTask();
+    const nextTask = this.scheduler.dequeue();
     if (!nextTask) return;
 
     worker.execute(nextTask);
-
-    this.queueSize--
   }
 
   private getAvailableWorker(): WorkerWrapper | null {
@@ -149,6 +206,10 @@ export class WorkerPool {
   }
 
   async terminateAll() {
+    if (this.scaleInterval) {
+      clearInterval(this.scaleInterval);
+    }
+
     await Promise.all(this.workers.map((w) => w.terminate()));
   }
 }
