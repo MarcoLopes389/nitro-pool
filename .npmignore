@@ -1,2 +1,6 @@
 src
 node_modules
+tsconfig.tsbuildinfo
+lib/test.d.ts
+lib/test.js
+lib/test.js.map

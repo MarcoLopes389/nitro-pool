@@ -1,3 +1,4 @@
+import { TaskPriority } from '../enums/task-priority.enum';
 import { ModulesMap } from '../types/module.type';
 import { WorkerEventType } from './worker-event-type.enum';
 
@@ -5,6 +6,7 @@ export type WorkerExecutionMessage = {
   context: unknown;
   func: string;
   modules?: ModulesMap;
+  priority?: TaskPriority;
 };
 
 interface WorkerMessageContentMap {

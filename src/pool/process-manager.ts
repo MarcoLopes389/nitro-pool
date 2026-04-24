@@ -10,6 +10,7 @@ import { PoolConfig } from '../types/pool-config.type';
 type PendingRequest = {
   resolve: (value: any) => void;
   reject: (reason?: any) => void;
+  timeout?: NodeJS.Timeout;
 };
 
 export class ProcessManager {
@@ -26,6 +27,7 @@ export class ProcessManager {
       type: ProcessEventType.REGISTER,
       content: {
         threads: config.threads,
+        maxPoolQueueSize: config.maxPoolQueueSize,
       },
     });
 
@@ -45,8 +47,14 @@ export class ProcessManager {
   }
 
   private spawn(scriptPath: string) {
+    const args = [];
+
+    if (this.options.poolMaxMemoryMb) {
+      args.push(`--max-old-space-size=${this.options.poolMaxMemoryMb}`);
+    }
+
     return fork(scriptPath, [], {
-      execArgv: [`--max-old-space-size=${this.options.poolMaxMemoryMb}`],
+      execArgv: args,
     });
   }
 
@@ -62,7 +70,21 @@ export class ProcessManager {
     };
 
     return new Promise<T>((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
+      const pending: PendingRequest = { resolve, reject };
+
+      if (content.timeout) {
+        const timeout = setTimeout(() => {
+          const error = new Error(`Task timeout after ${content.timeout}ms`);
+
+          this.pending.delete(id);
+
+          reject(error);
+        }, content.timeout);
+
+        pending.timeout = timeout;
+      }
+
+      this.pending.set(id, pending);
 
       this.send(message);
     });
@@ -97,6 +119,10 @@ export class ProcessManager {
       const pending = this.pending.get(id);
 
       if (pending) {
+        if (pending.timeout) {
+          clearTimeout(pending.timeout);
+        }
+
         pending.resolve(content);
         this.pending.delete(id);
       }
@@ -105,17 +131,21 @@ export class ProcessManager {
     }
 
     if (type === ProcessEventType.ERROR && id) {
-      const pending = this.pending.get(id)
+      const pending = this.pending.get(id);
 
       if (pending) {
-          const error = new Error(content.message)
-          error.stack = content.stack
+        if (pending.timeout) {
+          clearTimeout(pending.timeout);
+        }
 
-          pending.reject(error)
-          this.pending.delete(id)
+        const error = new Error(content.message);
+        error.stack = content.stack;
+
+        pending.reject(error);
+        this.pending.delete(id);
       }
 
-      return
+      return;
     }
   }
 

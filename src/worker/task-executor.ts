@@ -9,6 +9,7 @@ export class TaskExecutor {
     const contextfied = createContext({
       context,
       console,
+      setTimeout,
       modules: this.loadedModules,
     });
 

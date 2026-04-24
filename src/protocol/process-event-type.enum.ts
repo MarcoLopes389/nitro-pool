@@ -3,5 +3,5 @@ export enum ProcessEventType {
   EXECUTE = 'execute',
   READY = 'ready',
   RESULT = 'result',
-  ERROR = 'error'
+  ERROR = 'error',
 }

@@ -38,10 +38,6 @@ export class WorkerWrapper {
 
   onMessage(handler: (message: WorkerMessage, worker: WorkerWrapper) => void) {
     this.instance.on('message', (message: WorkerMessage) => {
-      if (message.type === WorkerEventType.RESULT) {
-        this.markReady();
-      }
-
       handler(message, this);
     });
   }

@@ -39,16 +39,14 @@ Instead of dealing with low-level APIs, you can just write:
 ```js
 await nitro.run(
   async (context, modules) => {
-    const content = await modules.fs.readFile('file.txt', 'utf-8')
-    return content.toUpperCase()
+    const content = await modules.fs.readFile('file.txt', 'utf-8');
+    return content.toUpperCase();
   },
   {},
   {
-    modules: [
-      defineModule('fs', 'fs/promises')
-    ]
-  }
-)
+    modules: [defineModule('fs', 'fs/promises')],
+  },
+);
 ```
 
 Nitro handles the rest — process isolation, worker management, and execution.
@@ -70,22 +68,20 @@ const nitro = new Nitro({
   retry: true, // not implemented yet
   pools: 10, // number of pools
   threads: 2, // threads per pool (total: 20)
-})
+});
 
 await nitro.run(
   async (context, modules) => {
-    const content = await modules.fs.readFile(context.path)
-    return content
+    const content = await modules.fs.readFile(context.path);
+    return content;
   },
   {
-    path: 'test.txt'
+    path: 'test.txt',
   },
   {
-    modules: [
-      defineModule('fs', 'fs/promises')
-    ]
-  }
-)
+    modules: [defineModule('fs', 'fs/promises')],
+  },
+);
 ```
 
 When executing this operation, the library automatically loads the specified module and injects it into the execution context.
@@ -101,53 +97,47 @@ const nitro = new Nitro({
   retry: true,
   pools: 2,
   threads: 1,
-})
+});
 
 // Since there are only 2 threads available, one of these tasks will be queued
 await Promise.all([
   nitro.run(
     async (context, modules) => {
-      const content = await modules.fs.readFile(context.path)
-      return content
+      const content = await modules.fs.readFile(context.path);
+      return content;
     },
     {
-      path: 'test.txt'
+      path: 'test.txt',
     },
     {
-      modules: [
-        defineModule('fs', 'fs/promises')
-      ]
-    }
+      modules: [defineModule('fs', 'fs/promises')],
+    },
   ),
   nitro.run(
     async (context, modules) => {
-      const content = await modules.fs.readFile(context.path)
-      return content
+      const content = await modules.fs.readFile(context.path);
+      return content;
     },
     {
-      path: 'test.txt'
+      path: 'test.txt',
     },
     {
-      modules: [
-        defineModule('fs', 'fs/promises')
-      ]
-    }
+      modules: [defineModule('fs', 'fs/promises')],
+    },
   ),
   nitro.run(
     async (context, modules) => {
-      const content = await modules.fs.readFile(context.path)
-      return content
+      const content = await modules.fs.readFile(context.path);
+      return content;
     },
     {
-      path: 'test.txt'
+      path: 'test.txt',
     },
     {
-      modules: [
-        defineModule('fs', 'fs/promises')
-      ]
-    }
-  )
-])
+      modules: [defineModule('fs', 'fs/promises')],
+    },
+  ),
+]);
 ```
 
 ## How it works
@@ -183,13 +173,13 @@ It is not recommended for:
 
 ## Configuration
 
-| Option             | Description                          |
-|------------------|----------------------------------|
-| `pools`          | Number of process pools            |
-| `threads`        | Threads per pool                   |
-| `poolMaxMemoryMb`| Memory limit per pool              |
-| `retry`          | Enable retry (WIP)                 |
-| `maxAttempts`    | Max retry attempts (WIP)           |
+| Option            | Description              |
+| ----------------- | ------------------------ |
+| `pools`           | Number of process pools  |
+| `threads`         | Threads per pool         |
+| `poolMaxMemoryMb` | Memory limit per pool    |
+| `retry`           | Enable retry (WIP)       |
+| `maxAttempts`     | Max retry attempts (WIP) |
 
 ## Error Handling
 
@@ -208,9 +198,7 @@ try {
 Since tasks run in an isolated environment, external modules must be explicitly injected.
 
 ```ts
-modules: [
-  defineModule('fs', 'fs/promises')
-]
+modules: [defineModule('fs', 'fs/promises')];
 ```
 
 Inside the task:

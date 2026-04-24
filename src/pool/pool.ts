@@ -2,7 +2,7 @@ import { PoolConfig } from '../types/pool-config.type';
 import path from 'node:path';
 import { TaskFunction } from '../types/task-function.type';
 import { ProcessManager } from './process-manager';
-import { ModulesMap } from '../types/module.type';
+import { PoolRunOptions } from '../types/pool-run-options.type';
 
 export class Pool {
   private processManager: ProcessManager;
@@ -20,13 +20,15 @@ export class Pool {
 
   async run<T, Y, M>(
     func: TaskFunction<T, Y, M>,
-    context: Y,
-    options: { modules: ModulesMap },
+    context?: Y,
+    options?: PoolRunOptions,
   ) {
     return this.processManager.execute({
       func: func.toString(),
       context,
-      modules: options.modules,
+      modules: options?.modules,
+      timeout: options?.timeout,
+      priority: options?.priority,
     });
   }
 }

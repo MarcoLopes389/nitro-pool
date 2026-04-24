@@ -7,6 +7,7 @@ import {
   ModuleDefinition,
   ModulesMap,
 } from '../types/module.type.js';
+import { NitroRunOptions } from '../types/nitro-run-options.type.js';
 
 export class Nitro {
   private pools: Pool[] = [];
@@ -16,12 +17,20 @@ export class Nitro {
   }
 
   private initialize(config: NitroConfig) {
-    const { pools, threads, poolMaxMemoryMb, maxAttempts, retry } = config;
+    const {
+      pools,
+      threads,
+      poolMaxMemoryMb,
+      maxAttempts,
+      retry,
+      maxPoolQueueSize,
+    } = config;
 
     for (let i = 0; i < pools; i++) {
       const pool = new Pool({
         threads,
         poolMaxMemoryMb,
+        maxPoolQueueSize,
         maxAttempts,
         retry,
       });
@@ -31,9 +40,13 @@ export class Nitro {
   }
 
   private serializeModules(
-    modules: readonly ModuleDefinition<any>[],
-  ): ModulesMap {
+    modules: readonly ModuleDefinition<any>[] | undefined,
+  ): ModulesMap | undefined {
     const result: ModulesMap = {};
+
+    if (!modules) {
+      return undefined;
+    }
 
     for (const mod of modules) {
       result[mod.name] = mod.path;
@@ -44,17 +57,16 @@ export class Nitro {
 
   async run<TReturn, TContext, TDefs extends readonly ModuleDefinition<any>[]>(
     func: TaskFunction<TReturn, TContext, InferModules<TDefs>>,
-    context: TContext,
-    options: {
-      modules: TDefs;
-    },
+    context?: TContext,
+    options?: NitroRunOptions<TDefs>,
   ) {
     const poolIndex = Randomizer.randomIndex(this.pools.length);
 
     const pool = this.pools[poolIndex];
 
     return pool.run(func, context, {
-      modules: this.serializeModules(options.modules),
+      modules: this.serializeModules(options?.modules),
+      ...options
     });
   }
 

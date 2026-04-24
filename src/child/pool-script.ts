@@ -11,9 +11,12 @@ process.on('message', (message: ProcessMessage) => {
 
   switch (type) {
     case ProcessEventType.REGISTER:
-      const { threads } = content;
+      const { threads, maxPoolQueueSize } = content;
 
-      workerPool = new WorkerPool(threads);
+      workerPool = new WorkerPool({
+        threads,
+        maxPoolQueueSize,
+      });
 
       workerPool.initialize(
         path.resolve(__dirname, '../worker/worker-script'),
@@ -44,11 +47,22 @@ process.on('message', (message: ProcessMessage) => {
       );
       break;
     case ProcessEventType.EXECUTE:
-      workerPool.execute({
-        content,
-        id,
-        type: WorkerEventType.EXECUTE,
-      });
+      try {
+        workerPool.execute({
+          content,
+          id,
+          type: WorkerEventType.EXECUTE,
+        });
+      } catch (error) {
+        process.send?.({
+          type: ProcessEventType.ERROR,
+          content: {
+            stack: (error as Error).stack,
+            message: (error as Error).message,
+          },
+          id,
+        });
+      }
 
       break;
   }
