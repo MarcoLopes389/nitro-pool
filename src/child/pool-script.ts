@@ -1,10 +1,13 @@
 import path from 'node:path';
 import { ProcessMessage } from '../protocol/process-message.type';
 import { ProcessEventType } from '../protocol/process-event-type.enum';
-import { WorkerPool } from './worker-pool';
 import { WorkerEventType } from '../protocol/worker-event-type.enum';
+import { WorkerPool } from './worker-pool';
+import { Logger } from '../core/logging/logger';
 
 let workerPool: WorkerPool;
+
+const logger = new Logger('child-process');
 
 process.on('message', (message: ProcessMessage) => {
   const { type, content, id } = message;
@@ -13,28 +16,28 @@ process.on('message', (message: ProcessMessage) => {
     case ProcessEventType.REGISTER:
       const {
         threads,
-        maxPoolQueueSize,
-        maxThreads,
-        autoscaling,
         maxStep,
+        maxThreads,
         minThreads,
-        scaleDownQueueThreshold,
-        scaleUpQueueThreshold,
+        autoscaling,
+        scalingInterval,
+        maxPoolQueueSize,
         targetUtilization,
-        scalingInterval
+        scaleUpQueueThreshold,
+        scaleDownQueueThreshold,
       } = content;
 
       workerPool = new WorkerPool({
         threads,
-        maxPoolQueueSize,
-        maxThreads,
-        autoscaling,
         maxStep,
+        maxThreads,
         minThreads,
-        scaleDownQueueThreshold,
-        scaleUpQueueThreshold,
-        targetUtilization,
+        autoscaling,
         scalingInterval,
+        maxPoolQueueSize,
+        targetUtilization,
+        scaleUpQueueThreshold,
+        scaleDownQueueThreshold,
       });
 
       workerPool.initialize(
@@ -84,9 +87,18 @@ process.on('message', (message: ProcessMessage) => {
       }
 
       break;
+    case ProcessEventType.METRICS:
+      process.send?.({
+        type: ProcessEventType.METRICS,
+        content: workerPool.getMetrics(),
+        id,
+      });
+
+      break;
   }
 });
 
 process.on('exit', async () => {
+  logger.warn('process exiting and terminating workers');
   await workerPool.terminateAll();
 });

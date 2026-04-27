@@ -8,5 +8,5 @@ export type WorkerPoolConfig = {
   scaleUpQueueThreshold?: number;
   scaleDownQueueThreshold?: number;
   maxStep?: number;
-  scalingInterval?: number
+  scalingInterval?: number;
 };

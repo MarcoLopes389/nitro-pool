@@ -9,14 +9,13 @@ export class TaskExecutor {
     const contextfied = createContext({
       context,
       console,
-      setTimeout,
       modules: this.loadedModules,
     });
 
     const script = `
             (async () => {
               const fn = ${func}
-              return await fn(context, modules)
+              return await fn({context, modules})
             })()
         `;
 

@@ -1,11 +1,9 @@
 export type PoolConfig = {
   threads: number;
   poolMaxMemoryMb?: number;
-  maxAttempts?: number;
-  retry?: boolean;
   maxPoolQueueSize?: number;
   autoscaling?: boolean;
-  scalingInterval?: number
+  scalingInterval?: number;
   smartResourcesLimiter?: boolean;
   maxThreads?: number;
   logging?: boolean;

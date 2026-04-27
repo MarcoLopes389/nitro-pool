@@ -8,6 +8,7 @@ import {
   ModulesMap,
 } from '../types/module.type.js';
 import { NitroRunOptions } from '../types/nitro-run-options.type.js';
+import { PoolMetrics } from '../types/pool-metrics.type.js';
 
 export class Nitro {
   private pools: Pool[] = [];
@@ -21,8 +22,6 @@ export class Nitro {
       pools,
       threads,
       poolMaxMemoryMb,
-      maxAttempts,
-      retry,
       maxPoolQueueSize,
       maxThreads,
       autoscaling,
@@ -41,8 +40,6 @@ export class Nitro {
         threads,
         poolMaxMemoryMb,
         maxPoolQueueSize,
-        maxAttempts,
-        retry,
         autoscaling,
         maxThreads,
         smartResourcesLimiter,
@@ -52,7 +49,7 @@ export class Nitro {
         scaleDownQueueThreshold,
         scaleUpQueueThreshold,
         targetUtilization,
-        scalingInterval
+        scalingInterval,
       });
 
       this.pools.push(pool);
@@ -88,6 +85,10 @@ export class Nitro {
       modules: this.serializeModules(options?.modules),
       ...options,
     });
+  }
+
+  async getMetrics(): Promise<PoolMetrics[]> {
+    return Promise.all(this.pools.map((pool) => pool.getMetrics()))
   }
 
   finish() {

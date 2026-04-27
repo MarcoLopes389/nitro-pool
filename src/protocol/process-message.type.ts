@@ -22,7 +22,7 @@ interface ProcessMessageMap {
     scaleUpQueueThreshold?: number;
     scaleDownQueueThreshold?: number;
     maxStep?: number;
-    scalingInterval?: number
+    scalingInterval?: number;
   };
   [ProcessEventType.READY]: {
     ok: boolean;
@@ -32,6 +32,7 @@ interface ProcessMessageMap {
     message: string;
     stack: string;
   };
+  [ProcessEventType.METRICS]: unknown
 }
 
 export type ProcessMessage = {

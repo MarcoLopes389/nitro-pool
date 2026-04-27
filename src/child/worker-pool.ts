@@ -2,12 +2,13 @@ import { Worker } from 'node:worker_threads';
 import { WorkerWrapper } from './worker-wrapper';
 import { WorkerEventType } from '../protocol/worker-event-type.enum';
 import { WorkerMessage } from '../protocol/worker-message.type';
-import { WorkerPoolConfig } from '../types/worker-pool-config.type';
 import { TaskPriority } from '../enums/task-priority.enum';
-import { Scheduler } from '../core/resources/scheduler';
+import { WorkerPoolConfig } from '../types/worker-pool-config.type';
 import { PoolMetrics } from '../types/pool-metrics.type';
+import { Scheduler } from '../core/resources/scheduler';
 import { RuntimeMeter } from '../core/resources/runtime-meter';
 import { AutoScaler } from '../core/resources/autoscaler';
+import { Logger } from '../core/logging/logger';
 
 type Callbacks = {
   onReady: () => void;
@@ -21,6 +22,7 @@ export class WorkerPool {
   private scheduler: Scheduler;
   private runtimeMeter: RuntimeMeter;
   private autoscaler: AutoScaler;
+  private logger: Logger;
   private scaleInterval: NodeJS.Timeout | undefined;
 
   constructor(private config: WorkerPoolConfig) {
@@ -34,6 +36,7 @@ export class WorkerPool {
       targetUtilization: config.targetUtilization,
     });
     this.runtimeMeter = new RuntimeMeter();
+    this.logger = new Logger('worker-pool');
   }
 
   initialize(workerScriptPath: string, callbacks: Callbacks) {
@@ -72,12 +75,12 @@ export class WorkerPool {
       this.handleWorkerMessage(message, workerRef, callbacks);
     });
 
-    wrapper.onError((err) => {
-      console.error('worker error:', err);
+    wrapper.onError((error) => {
+      this.logger.error('worker error:', { error });
     });
 
     wrapper.onExit((code) => {
-      console.log('worker exit:', code);
+      this.logger.info('worker exit:', { code });
     });
 
     this.workers.push(wrapper);
@@ -91,20 +94,21 @@ export class WorkerPool {
 
       if (decision > 0) {
         for (let i = 0; i < decision; i++) {
-          console.log('adicionando worker')
+          this.logger.info('scaling pool adding 1 new worker');
           this.addWorker(callbacks);
         }
       }
 
       if (decision < 0) {
         for (let i = 0; i < Math.abs(decision); i++) {
+          this.logger.info('down scaling pool removing 1 worker');
           this.removeWorker();
         }
       }
     }, this.config.scalingInterval ?? 1000);
   }
 
-  private getMetrics(): PoolMetrics {
+  getMetrics(): PoolMetrics {
     const idleWorkers = this.workers.filter((w) => w.isReady()).length;
     const busyWorkers = this.workers.filter((w) => w.isBusy()).length;
 

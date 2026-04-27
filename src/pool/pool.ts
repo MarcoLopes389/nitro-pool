@@ -3,6 +3,7 @@ import path from 'node:path';
 import { TaskFunction } from '../types/task-function.type';
 import { ProcessManager } from './process-manager';
 import { PoolRunOptions } from '../types/pool-run-options.type';
+import { PoolMetrics } from '../types/pool-metrics.type';
 
 export class Pool {
   private processManager: ProcessManager;
@@ -16,6 +17,10 @@ export class Pool {
 
   finish() {
     this.processManager.kill();
+  }
+
+  async getMetrics(): Promise<PoolMetrics> {
+    return this.processManager.getMetrics()
   }
 
   async run<T, Y, M>(
