@@ -9,9 +9,10 @@
 - [Configuration](#configuration)
 - [Error Handling](#error-handling)
 - [Modules](#modules)
+- [Observability](#observability)
+- [Autoscaling](#autoscaling)
 - [Limitations](#limitations)
 - [Security](#security)
-- [Retry and Timeout (WIP)](#retry-and-timeout-wip)
 
 ## Installation
 
@@ -38,7 +39,7 @@ Instead of dealing with low-level APIs, you can just write:
 
 ```js
 await nitro.run(
-  async (context, modules) => {
+  async ({ modules }) => {
     const content = await modules.fs.readFile('file.txt', 'utf-8');
     return content.toUpperCase();
   },
@@ -64,14 +65,12 @@ Below is a basic usage example:
 ```javascript
 const nitro = new Nitro({
   poolMaxMemoryMb: 128, // memory limit per pool
-  maxAttempts: 1, // not implemented yet
-  retry: true, // not implemented yet
   pools: 10, // number of pools
   threads: 2, // threads per pool (total: 20)
 });
 
 await nitro.run(
-  async (context, modules) => {
+  async ({ context, modules }) => {
     const content = await modules.fs.readFile(context.path);
     return content;
   },
@@ -93,8 +92,6 @@ If you try to execute more tasks than available threads, the library will automa
 ```javascript
 const nitro = new Nitro({
   poolMaxMemoryMb: 128,
-  maxAttempts: 1,
-  retry: true,
   pools: 2,
   threads: 1,
 });
@@ -102,7 +99,7 @@ const nitro = new Nitro({
 // Since there are only 2 threads available, one of these tasks will be queued
 await Promise.all([
   nitro.run(
-    async (context, modules) => {
+    async ({ context, modules }) => {
       const content = await modules.fs.readFile(context.path);
       return content;
     },
@@ -114,7 +111,7 @@ await Promise.all([
     },
   ),
   nitro.run(
-    async (context, modules) => {
+    async ({ context, modules }) => {
       const content = await modules.fs.readFile(context.path);
       return content;
     },
@@ -126,7 +123,7 @@ await Promise.all([
     },
   ),
   nitro.run(
-    async (context, modules) => {
+    async ({ context, modules }) => {
       const content = await modules.fs.readFile(context.path);
       return content;
     },
@@ -173,13 +170,33 @@ It is not recommended for:
 
 ## Configuration
 
-| Option            | Description              |
-| ----------------- | ------------------------ |
-| `pools`           | Number of process pools  |
-| `threads`         | Threads per pool         |
-| `poolMaxMemoryMb` | Memory limit per pool    |
-| `retry`           | Enable retry (WIP)       |
-| `maxAttempts`     | Max retry attempts (WIP) |
+| Option                    | Type   | Required | Description                                                                 |
+|---------------------------|--------|----------|-----------------------------------------------------------------------------|
+| `pools`                   | number | yes      | Number of process pools to create                                           |
+| `threads`                 | number | yes      | Initial number of worker threads per pool                                   |
+| `poolMaxMemoryMb`         | number | no       | Maximum memory (in MB) allowed per pool process                             |
+| `logging`                 | boolean| no       | Enables internal logging                                                    |
+| `maxPoolQueueSize`        | number | no       | Maximum number of tasks allowed in the pool queue                           |
+| `autoscaling`             | boolean| no       | Enables automatic scaling of worker threads                                 |
+| `scalingInterval`         | number | no       | Interval (in ms) between autoscaling evaluations                            |
+| `minThreads`              | number | no       | Minimum number of threads when autoscaling is enabled                       |
+| `maxThreads`              | number | no       | Maximum number of threads when autoscaling is enabled                       |
+| `targetUtilization`       | number | no       | Desired worker utilization ratio (e.g. 0.7 = 70% busy)                      |
+| `scaleUpQueueThreshold`   | number | no       | Queue size threshold to trigger scaling up                                  |
+| `scaleDownQueueThreshold` | number | no       | Queue size threshold to trigger scaling down                                |
+| `maxStep`                 | number | no       | Maximum number of threads to add/remove per scaling cycle                   |
+
+### Defaults
+
+When optional options are not provided, Nitro uses sensible defaults:
+
+- `logging`: false  
+- `autoscaling`: false  
+- `scalingInterval`: 1000ms  
+- `targetUtilization`: 0.7  
+- `maxStep`: 1  
+
+Autoscaling-related options are only considered when `autoscaling` is enabled.
 
 ## Error Handling
 
@@ -217,6 +234,44 @@ Explicit module injection ensures:
 - Better type safety
 - No hidden dependencies
 
+## Observability
+
+Nitro provides internal metrics that can be used to monitor system performance.
+
+Metrics include:
+
+- Active workers
+- Idle workers
+- Queue size
+- Average execution time
+- Average tasks per second
+
+These metrics are used internally for autoscaling and can be exposed for monitoring purposes.
+
+## Autoscaling
+
+Nitro includes an optional autoscaling system that dynamically adjusts the number of workers based on workload.
+
+It evaluates:
+
+- Task throughput
+- Average execution time
+- Queue size
+
+Based on these metrics, Nitro automatically scales the number of workers up or down to maintain optimal performance.
+
+### Example
+
+```ts
+const nitro = new Nitro({
+  pools: 2,
+  threads: 2,
+  autoScale: true,
+});
+```
+
+Autoscaling helps maintain a stable queue size and prevents both underutilization and overload.
+
 ## Limitations
 
 Due to the execution model used by Nitro, there are some important limitations:
@@ -236,12 +291,3 @@ Make sure all required logic is defined inside the function body.
 Tasks are executed using `vm` in an isolated context.
 
 This library assumes that the code being executed is trusted. It is not designed to safely execute untrusted user input.
-
-## Retry and Timeout (WIP)
-
-Retry and timeout configurations are planned but not fully implemented yet.
-
-- `retry`: enables retry logic
-- `maxAttempts`: defines how many times a task should be retried
-
-These features are currently under development.

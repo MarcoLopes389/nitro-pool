@@ -36,7 +36,7 @@ export class WorkerPool {
       targetUtilization: config.targetUtilization,
     });
     this.runtimeMeter = new RuntimeMeter();
-    this.logger = new Logger('worker-pool');
+    this.logger = new Logger(config.logging, 'worker-pool');
   }
 
   initialize(workerScriptPath: string, callbacks: Callbacks) {
@@ -62,7 +62,7 @@ export class WorkerPool {
   }
 
   private addWorker(callbacks: Callbacks) {
-    const worker = new Worker(this.workerScriptPath);
+    const worker = new Worker(this.workerScriptPath, { workerData: { logging: this.config.logging } });
     const wrapper = new WorkerWrapper(worker);
 
     wrapper.onMessage((message, workerRef) => {

@@ -1,4 +1,4 @@
-import { parentPort, threadId } from 'node:worker_threads';
+import { parentPort, threadId, workerData } from 'node:worker_threads';
 import { WorkerEventType } from '../protocol/worker-event-type.enum';
 import { TaskExecutor } from './task-executor';
 import { WorkerMessage } from '../protocol/worker-message.type';
@@ -6,7 +6,7 @@ import { Logger } from '../core/logging/logger';
 
 const taskExecutor = new TaskExecutor();
 
-const logger = new Logger(`worker:${threadId}`);
+const logger = new Logger(workerData.logging, `worker:${threadId}`);
 
 parentPort?.postMessage({
   type: WorkerEventType.READY,

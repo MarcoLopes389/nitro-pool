@@ -23,6 +23,7 @@ interface ProcessMessageMap {
     scaleDownQueueThreshold?: number;
     maxStep?: number;
     scalingInterval?: number;
+    logging?: boolean
   };
   [ProcessEventType.READY]: {
     ok: boolean;

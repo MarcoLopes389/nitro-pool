@@ -6,8 +6,7 @@ import { WorkerPool } from './worker-pool';
 import { Logger } from '../core/logging/logger';
 
 let workerPool: WorkerPool;
-
-const logger = new Logger('child-process');
+let logger: Logger;
 
 process.on('message', (message: ProcessMessage) => {
   const { type, content, id } = message;
@@ -17,6 +16,7 @@ process.on('message', (message: ProcessMessage) => {
       const {
         threads,
         maxStep,
+        logging,
         maxThreads,
         minThreads,
         autoscaling,
@@ -30,6 +30,7 @@ process.on('message', (message: ProcessMessage) => {
       workerPool = new WorkerPool({
         threads,
         maxStep,
+        logging,
         maxThreads,
         minThreads,
         autoscaling,
@@ -67,6 +68,9 @@ process.on('message', (message: ProcessMessage) => {
           },
         },
       );
+
+      logger = new Logger(logging, 'child-process')
+
       break;
     case ProcessEventType.EXECUTE:
       try {
@@ -99,6 +103,6 @@ process.on('message', (message: ProcessMessage) => {
 });
 
 process.on('exit', async () => {
-  logger.warn('process exiting and terminating workers');
+  logger?.warn('process exiting and terminating workers');
   await workerPool.terminateAll();
 });

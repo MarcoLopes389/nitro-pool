@@ -9,4 +9,5 @@ export type WorkerPoolConfig = {
   scaleDownQueueThreshold?: number;
   maxStep?: number;
   scalingInterval?: number;
+  logging?: boolean
 };

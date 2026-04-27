@@ -1,7 +1,9 @@
 export class Logger {
   private serviceName?: string;
+  private readonly enabled: boolean
 
-  constructor(serviceName?: string) {
+  constructor(enabled: boolean = false, serviceName?: string) {
+    this.enabled = enabled
     this.serviceName = serviceName;
   }
 
@@ -16,6 +18,8 @@ export class Logger {
   }
 
   private log(level: string, message: string, meta?: Record<string, any>) {
+    if (!this.enabled) return;
+
     const output = this.format(level, message, meta);
 
     if (level === 'error') {

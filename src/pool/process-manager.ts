@@ -24,7 +24,7 @@ export class ProcessManager {
 
   constructor(scriptPath: string, config: PoolConfig) {
     this.options = config;
-    this.logger = new Logger('process-manager');
+    this.logger = new Logger(config.logging, 'process-manager');
     this.child = this.spawn(scriptPath);
 
     this.child.send({
@@ -40,6 +40,7 @@ export class ProcessManager {
         scaleDownQueueThreshold: config.scaleDownQueueThreshold,
         maxStep: config.maxStep,
         scalingInterval: config.scalingInterval,
+        logging: config.logging
       },
     });
 
